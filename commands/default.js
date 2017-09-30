@@ -2,6 +2,7 @@
 
 const { Command, Arg } = require("./commands.js");
 const { Message, MessageReaction, RichEmbed, Guild } = require("discord.js");
+
 const fs = require('fs');
 
 let commands = [
@@ -20,7 +21,7 @@ let commands = [
             let type = typeof (evaled) == 'object' ? "object - " + evaled.constructor.name : typeof (evaled);
             let sent = msg.edit(msg.content, {
                 embed: new RichEmbed()
-                    .addField("Output", "```js\n" + output + "```")
+                    .addField("Output", "```js\n" + resources.tools.prepCode(output) + "```")
                     .addField("Type", "```js\n" + type + "```")
             });
             if (output == "Promise { <pending> }") {
@@ -28,14 +29,14 @@ let commands = [
                     sent.then(msg => {
                         msg.edit(msg.content, {
                             embed: new RichEmbed()
-                                .addField("Output", "```js\n" + util.inspect(result, { depth: 0 }).slice(0, 1750) + "```")
+                                .addField("Output", "```js\n" + resources.tools.prepCode(util.inspect(result, { depth: 0 }).slice(0, 1750)) + "```")
                                 .addField("Type", "```js\nobject - " + result.constructor.name + "```")
                         });
                     });
                 });
             }
         } catch (ex) {
-            msg.edit(null, { embed: new RichEmbed().setDescription(": Input :```js\n" + args.extra + "```\n: Exception :```js\n" + ex.message + "```: Type :```js\n" + ex.name + "```") });
+            msg.edit("", { embed: new RichEmbed().setDescription(": Input :```js\n" + args.extra + "```\n: Exception :```js\n" + ex.message + "```: Type :```js\n" + ex.name + "```") });
         }
     }),
     new Command("restart", "restarts the bot", null, (msg, args, resources) => {
@@ -90,7 +91,10 @@ let commands = [
                 if (reaction.message.id == msgr.message.id && !reaction.me) {
                     switch (reaction.emoji.toString()) {
                         case "❌":
-                            reaction.message.edit("code for `" + args.file + "`: (removed)").then(msg => {
+                            let embed = new RichEmbed()
+                                .setTitle("code for `" + args.file + "`:")
+                                .setDescription("[CANCLED]");
+                            reaction.message.edit("", {embed}).then(msg => {
                                 msg.clearReactions();
                             })
                             break;
@@ -109,7 +113,10 @@ let commands = [
          * @param {number} index 
          */
         let sendCode = (msg, index) => {
-            msg.edit("code for `" + args.file + "`:```js\n" + segments[index] + "```").then(msg => {
+            let embed = new RichEmbed()
+                .setTitle("code for `" + args.file + "`:")
+                .setDescription("```js\n" + segments[index] + "```")
+            msg.edit(" ", { embed }).then(msg => {
                 if (segments.length > 1) {
                     if (index == 0) {
                         pChain(msg.react("❌"), [

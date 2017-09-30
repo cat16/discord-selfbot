@@ -1,6 +1,7 @@
 const { lstatSync, readdirSync } = require('fs');
 const { join } = require('path');
 const cycle = require('cycle');
+const config = require("./config.json");
 
 /**
  * @param {string} source 
@@ -161,7 +162,9 @@ let promiseChain = (promise, funcs) => {
  * @param {string} code 
  */
 let prepCode = (code) => {
-    return code.replace(/```/g, "[CODEBLOCK]");
+    return code
+        .replace(/```/g, "[CODEBLOCK]")
+        .replace(new RegExp(config.token, 'g'), "[TOKEN]")
 }
 
 /**
@@ -169,7 +172,9 @@ let prepCode = (code) => {
  * @param {string} code 
  */
 let unPrepCode = (code) => {
-    return code.replace(/[CODEBLOCK]/g, "```");
+    return code
+        .replace(/[CODEBLOCK]/g, "```")
+        .replace(new RegExp("[TOKEN]", 'g'), config.token)
 }
 
 module.exports.getDirectories = getDirectories;
