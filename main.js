@@ -41,6 +41,7 @@ let err = (msg, prefix) => {
 //start of bot
 
 phase("Bot Starting");
+log("using node " + process.version);
 
 let fork = require('child_process').fork;
 
@@ -53,7 +54,7 @@ let createBot = () => {
 
     let child = fork(__dirname + '/bot.js', [], {
         stdio: 'pipe',
-        execArgv: ["--inspect=9999"]
+        execArgv: ["--inspect=9999"] //required (and useful anyway) for Visual Studio Code to deploy the process
     });
 
     exitChild = () => {
@@ -105,10 +106,7 @@ let createBot = () => {
 
         switch (protocol) {
             case "HOLD": {
-                console.log(msg);
                 let data = msg.split(":", 2);
-
-                console.log(data);
 
                 let nameLength = parseInt(data[0]);
                 let name = data[1].slice(0, nameLength);
@@ -130,7 +128,11 @@ let createBot = () => {
 
                 delete storage[name];
 
-                log("released '"+name+"' to bot");
+                if(data !== "NO_DATA") log("released '"+name+"' to bot");
+                break;
+            }
+            case "READY": {
+                phase("Bot Ready");
                 break;
             }
         }
@@ -152,13 +154,14 @@ let exitHandler = function (signal) {
         case Signal.EXIT:
             if(exitChild != null)
                 exitChild();
-            phase("Bot saving and shutting down.");
+            phase("Bot Stopped");
             break;
     }
 }
 
-//catch process.exit
 process.on('exit', exitHandler.bind(Signal.EXIT));
+
+process.on('uncaughtException', exitHandler.bind(Signal.CRASH));
 
 //catch when the terminal is closed
 process.on('SIGHUP', exitHandler.bind(Signal.EXIT));
@@ -166,7 +169,6 @@ process.on('SIGHUP', exitHandler.bind(Signal.EXIT));
 //catch ctrl+c event
 process.on('SIGINT', exitHandler.bind(Signal.EXIT));
 
-//catch uncaught exceptions
-process.on('uncaughtException', exitHandler.bind(Signal.CRASH));
+log("deploying bot process...");
 
 createBot();

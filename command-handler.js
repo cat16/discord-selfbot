@@ -1,8 +1,14 @@
-const { Command } = require("./commands/commands.js");
+const { Command, respond } = require("./commands/commands.js");
 const Message = require("discord.js").Message;
-const { getFiles } = require("./tools.js");
+const { getFiles, load, save } = require("./tools.js");
 
-let prefix = "self.";
+class CommandHandlerState {
+    constructor() {
+        this.deleteResponses = false;
+        this.deleteCommands = false;
+        this.prefixes = ["self.", "s.", "self < "];
+    }
+}
 
 /**
  * @property {Command[]} commands - an array of all commands being used
@@ -19,6 +25,8 @@ class CommandHandler {
          * @type {Resources}
          */
         this.resources = null;
+        /**@type {CommandHandlerState} */
+        this.state = Object.assign(new CommandHandlerState(), load("commands"));
     }
 
     /**
@@ -40,10 +48,10 @@ class CommandHandler {
                                 for (let arg of command.args) {
                                     if (arg.options == null) arg.options = [];
                                 }
-                            }else{
+                            } else {
                                 command.args = [];
                             }
-                            if(command.aliases == null){
+                            if (command.aliases == null) {
                                 command.aliases = [];
                             }
                             this.commands.push(command);
@@ -66,7 +74,7 @@ class CommandHandler {
     /**
      * @param {Command} command 
      * @param {Message} msg
-     * @param {String} text 
+     * @param {String} text
      */
     process(command, msg, text) {
         let args = {};
@@ -84,7 +92,7 @@ class CommandHandler {
                 if (!optionChosen) {
                     let options = "";
                     for (let i = 0; i < arg.options.length; i++) {
-                        options += "'" + arg.options[option] + "'";
+                        options += "'" + arg.options[i] + "'";
                         if (i < arg.options.length - 1) options += ", "
                     }
                     msg.edit(msg.content +
@@ -107,7 +115,12 @@ class CommandHandler {
         }
         args.extra = text;
         try {
-            command.handle(msg, args, this.resources);
+            /**@param {string} msg2*/
+            let respondForCommands = (msg2) => {
+                return respond(msg.channel, msg2, this.state.deleteResponses);
+            };
+            command.handle(respondForCommands, msg, args, this.resources);
+            console.log("[command-handler] successfully ran command '" + command.name + "'");
         } catch (ex) {
             console.error(
                 "Command '" + command.name + "' crashed!" +
@@ -121,28 +134,49 @@ class CommandHandler {
      */
     handle(msg) {
 
-        let text = msg.content;
+        let text = msg.content.toLocaleLowerCase();
 
-        if (text.startsWith(prefix)) {
-            text = text.slice(prefix.length);
+        for (let prefix of this.state.prefixes) {
+            if (text.startsWith(prefix)) {
+                text = text.slice(prefix.length);
 
-            commandLoop:
-            for (let command of this.commands) {
-                if (text.startsWith(command.name)) {
-                    this.process(command, msg, text.slice(command.name.length + 1));
-                    text = text.slice(command.name.length + 1);
-                    break;
-                } else {
-                    for (let alias of command.aliases) {
-                        if (text.startsWith(alias)) {
-                            this.process(command, msg, text.splice(alias.length + 1));
-                            break commandLoop;
+                commandLoop:
+                for (let command of this.commands) {
+                    if (text.startsWith(command.name.toLocaleLowerCase())) {
+                        //if command is found
+                        if (this.state.deleteCommands) {
+                            msg.delete().then(delMsg => {
+                                this.process(command, delMsg, text.slice(command.name.length + 1));
+                            });
+                        } else this.process(command, msg, text.slice(command.name.length + 1));
+
+                        break;
+                    } else {
+                        for (let alias of command.aliases) {
+                            if (text.startsWith(alias)) {
+                                //if command is found
+                                if (this.state.deleteCommands) {
+                                    msg.delete().then(delMsg => {
+                                        this.process(command, delMsg, text.slice(alias.length + 1));
+                                    });
+                                } else this.process(command, msg, text.slice(alias.length + 1));
+
+                                break commandLoop;
+                            }
                         }
                     }
                 }
+                break;
             }
         }
 
+    }
+
+    /**
+     * Saves the command handler's state
+     */
+    save() {
+        save("commands", this.state);
     }
 
 }

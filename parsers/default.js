@@ -207,8 +207,9 @@ const Message = require("discord.js").Message;
 
 /**
  * @param {Message} msg 
+ * @param {function(object):void} log
  */
-let parse = function (msg) {
+let parse = function (msg, log) {
 
     //apply everything
     let content = applyReplacing(msg.content);
@@ -227,6 +228,8 @@ let parse = function (msg) {
     if(edit.msg == msg.content)
         return null;
 
+    log("parsed message (id "+msg.id+")");
+
     return msg.edit(edit.msg, edit.options);
 }
 
@@ -239,4 +242,4 @@ let save = function () {
     return { replacers, groups };
 }
 
-module.exports = new Parser("default", "the default parser with replacing and grouping edit functionality", parse, save, load);
+module.exports = new Parser("default", "The default parser; contains basic replace and group edit functionality", parse, save, load);

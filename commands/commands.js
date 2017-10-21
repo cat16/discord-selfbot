@@ -1,4 +1,4 @@
-const { Message } = require("discord.js");
+const { Message, TextChannel } = require("discord.js");
 const Resources = require("../resources.js");
 
 /**
@@ -21,6 +21,29 @@ let Arg = class Arg {
 }
 
 /**
+ * Sends a message formatted the "default" way. Use for simple info about what just happened
+ * @param {String} msg 
+ * @return {Promise<Message>|void}
+ */
+let respondForCommands = (msg) => {}
+
+/**
+ * Sends a message formatted the "default" way. Use for simple info about what just happened
+ * @param {TextChannel} channel
+ * @param {String} msg 
+ * @return {Promise<Message>}
+ */
+let respond = (channel, msg, autoDelete) => {
+    let promise = channel.send("self > "+msg);
+    if(autoDelete == null ? false : autoDelete){
+        promise.then(msg2 => {msg2.delete(5000)});
+        return promise;
+    }else{
+        return promise;
+    }
+}
+
+/**
  * A command you can use
  * @property {String} name - the name of the command
  * @property {String} description - basic info about what the command does
@@ -34,7 +57,7 @@ let Command = class Command {
      * @param {String} name 
      * @param {String} description 
      * @param {String[]} [aliases]
-     * @param {function(Message, object, Resources)} handleFunc 
+     * @param {function(respondForCommands, Message, object, Resources)} handleFunc
      * @param {Arg[]} args 
      */
     constructor(name, description, aliases, handleFunc, args) {
@@ -49,3 +72,4 @@ let Command = class Command {
 
 module.exports.Arg = Arg;
 module.exports.Command = Command;
+module.exports.respond = respond;

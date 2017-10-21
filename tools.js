@@ -3,6 +3,8 @@ const { join } = require('path');
 const cycle = require('cycle');
 const config = require("./config.json");
 
+const { RichEmbed } = require('discord.js');
+
 /**
  * @param {string} source 
  * @return {boolean}
@@ -61,7 +63,8 @@ let stringifyFunctions = (obj) => {
  * @return {string}
  */
 let stringifyFull = (obj) => {
-    return JSON.stringify(stringifyFunctions(cycle.decycle(obj)));
+    return JSON.stringify(stringifyFunctions(cycle.decycle(obj)), null, '\t');
+    //JSON.stringify(<object>, null, '\t') for formatting, but we want compression
 }
 
 /**
@@ -77,7 +80,6 @@ let save = (category, data) => {
     } catch (ex) { }
     const fs = require('fs');
     fs.writeFileSync(__dirname + "/state.json", stringifyFull(write));
-    //JSON.stringify(write, null, '\t') for formatting, but we want compression
 }
 
 /**
@@ -102,11 +104,11 @@ let objectifyFunctions = (obj) => {
 }
 
 /**
- * Turns a string from stringifyFull back into it's original object
- * @param {string} objStr 
+ * Turns an object from require() back into it's original object after stringifyFull was used to put it there
+ * @param {string} obj
  */
-let objectifyFull = (objStr) => {
-    return cycle.retrocycle(objectifyFunctions(JSON.parse(objStr)));
+let objectifyFull = (obj) => {
+    return cycle.retrocycle(objectifyFunctions(obj));
 }
 
 /**
@@ -119,7 +121,7 @@ let load = (category) => {
         if (state[category] != null) {
             data = objectifyFull(state[category]);
         }
-    } catch (ex) { }
+    } catch (ex) { console.error("tools.js#load() > "+ex.stack) }
     return data;
 }
 
@@ -163,7 +165,7 @@ let promiseChain = (promise, funcs) => {
  */
 let prepCode = (code) => {
     return code
-        .replace(/```/g, "[CODEBLOCK]")
+        .replace(new RegExp("```", 'g'), "[CODEBLOCK]")
         .replace(new RegExp(config.token, 'g'), "[TOKEN]")
 }
 
@@ -173,23 +175,48 @@ let prepCode = (code) => {
  */
 let unPrepCode = (code) => {
     return code
-        .replace(/[CODEBLOCK]/g, "```")
+        .replace(new RegExp("[CODEBLOCK]", 'g'), "```")
         .replace(new RegExp("[TOKEN]", 'g'), config.token)
 }
 
+/**
+ * 
+ * @param {string} title - the title of the list
+ * @param {T[]} list - the list of objects you want to list
+ * @param {function(T):string} infoFunc - a function that returns the information you want to list for each object
+ * @param {number} [barFix] - the number of 
+ * @template T - an object
+ */
+let embedList = (title, list, infoFunc, barFix) => {
+    if (barFix == null) barFix = 0;
+    let listText = "";
+    let maxLength = 0;
+    for (let item of list) {
+        let itemText = "\n:small_blue_diamond: " + infoFunc(item);
+        if (itemText.length > maxLength) {
+            maxLength = itemText.length;
+        }
+        listText += itemText;
+    }
+    let bar = "";
+    for (let i = 0; i < ((maxLength - 18 + barFix) / 2) - (title.length / 2); i++) bar += "-";
+    return new RichEmbed()
+        .setTitle(":large_orange_diamond:" + bar + title + bar)
+        .setDescription(listText);
+}
+
+//data related
 module.exports.getDirectories = getDirectories;
 module.exports.getFiles = getFiles;
-
 module.exports.stringifyFull = stringifyFull;
 module.exports.objectifyFull = objectifyFull;
-
 module.exports.save = save;
 module.exports.load = load;
-
 module.exports.hold = hold;
 module.exports.release = release;
-
+//idk
 module.exports.promiseChain = promiseChain;
-
+//discord specific
 module.exports.prepCode = prepCode;
 module.exports.unPrepCode = unPrepCode;
+module.exports.embedList = embedList;

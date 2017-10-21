@@ -9,11 +9,8 @@ const Resources = require("./resources.js");
  * @property {boolean} enabled - whether the parser should parse or not
  */
 class ParserState {
-    /**
-     * @param {boolean} enabled
-     */
-    constructor(enabled) {
-        this.enabled = enabled;
+    constructor() {
+        this.enabled = true;
     }
 }
 
@@ -52,7 +49,7 @@ class ParserHandler {
                 if (i < this.parsers.length) {
                     let edited = null;
                     try {
-                        edited = this.parsers[i].parse(newMsg);
+                        edited = this.parsers[i].parse(newMsg, (msg) => {console.log("[parser:"+this.parsers[i].name+"] "+msg)});
                     } catch (ex) {
                         console.error("Error occured while using parser '" + this.parsers[i].name + "':");
                         console.errer(ex.stack);
@@ -106,7 +103,7 @@ class ParserHandler {
             let parser = this.parsers[i];
 
             if (loadData.states == null) loadData.states = {};
-            if (loadData.states[parser.name] == null) loadData.states[parser.name] = new ParserState(true);
+            loadData.states[parser.name] = Object.assign(new ParserState(), loadData.states[parser.name]);
             let data = loadData.states[parser.name];
 
             if (loadData.data == null) loadData.data = {};
