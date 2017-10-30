@@ -12,7 +12,6 @@ const { ParserHandler } = require("./parser-handler.js");
 module.exports = class Resources {
     
     /**
-     * 
      * @param {Client} bot 
      * @param {CommandHandler} commandhandler
      * @param {ParserHandler} parserhandler
@@ -26,6 +25,7 @@ module.exports = class Resources {
         this.restart = restart;
         this.save = save;
         this.tools = require("./tools.js");
+        this.config = require("./config.json");
     }
 
 }

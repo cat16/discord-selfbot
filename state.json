@@ -1,0 +1,51 @@
+{
+	"parsing": {
+		"states": {
+			"default": {
+				"enabled": true
+			}
+		},
+		"data": {
+			"default": {
+				"replacers": [
+					{
+						"find": [
+							"(lenny)"
+						],
+						"replace": "( ͡° ͜ʖ ͡°)"
+					},
+					{
+						"find": [
+							"(tm)"
+						],
+						"replace": "™"
+					}
+				],
+				"groups": [
+					{
+						"keys": [
+							"embed"
+						],
+						"apply": "(text, args) => {\r\n            return { options: { embed: new RichEmbed()\r\n                .setDescription(text)\r\n                .setColor(args.color)\r\n            }};\r\n        }"
+					},
+					{
+						"keys": [
+							"long"
+						],
+						"apply": "(text, args) => {\r\n            let spaces = \"   \";\r\n            if (args.spaces != null) {\r\n                for (let i = 0; i < args.spaces; i++) {\r\n                    spaces += \" \";\r\n                }\r\n            }\r\n            text = text.split(\" \").join(spaces);\r\n            return { msg: text.split(\"\").join(spaces) };\r\n        }"
+					}
+				]
+			}
+		}
+	},
+	"commands": {
+		"deleteResponses": true,
+		"deleteCommands": true,
+		"prefixes": [
+			"self.",
+			"s.",
+			"self < "
+		],
+		"autoDelete": true
+	}
+}

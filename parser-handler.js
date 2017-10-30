@@ -43,7 +43,7 @@ class ParserHandler {
 
             let i = 0;
             /**
-             * @param {Message} newMsg 
+             * @param {Message} newMsg
              */
             let edit = newMsg => {
                 if (i < this.parsers.length) {

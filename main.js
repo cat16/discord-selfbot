@@ -102,7 +102,7 @@ let createBot = () => {
         let msg = m;
 
         let protocol = msg.split(":", 2)[0];
-        msg = msg.substring(msg.indexOf(":")+1);
+        msg = msg.substring(msg.indexOf(":") + 1);
 
         switch (protocol) {
             case "HOLD": {
@@ -117,18 +117,18 @@ let createBot = () => {
                 log("recieved and stored '" + name + "' from bot");
                 break;
             }
-            case "RELEASE":{
+            case "RELEASE": {
                 let name = msg;
 
                 let data = storage[name];
-                if(data == null){
+                if (data == null) {
                     data = "NO_DATA";
                 }
                 child.send(data);
 
                 delete storage[name];
 
-                if(data !== "NO_DATA") log("released '"+name+"' to bot");
+                if (data !== "NO_DATA") log("released '" + name + "' to bot");
                 break;
             }
             case "READY": {
@@ -152,7 +152,7 @@ let exitHandler = function (signal) {
         case Signal.CRASH:
             err("program crashed!");
         case Signal.EXIT:
-            if(exitChild != null)
+            if (exitChild != null)
                 exitChild();
             phase("Bot Stopped");
             break;

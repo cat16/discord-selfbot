@@ -78,38 +78,72 @@ class CommandHandler {
      */
     process(command, msg, text) {
         let args = {};
+        let currentChannel = 0;
+        let currentUser = 0;
         for (let arg of command.args) {
-            if (arg.options.length > 0) {
-                let optionChosen = false;
-                for (let option of arg.options) {
-                    if (text.startsWith(option)) {
-                        args[arg.name] = text.slice(0, option.length);
-                        text = text.slice(option.length + 1);
-
-                        optionChosen = true;
+            if (arg.type != null) {
+                switch (arg.type) {
+                    case "channel": {
+                        let arr = msg.mentions.channels.array();
+                        if (arr.length > currentChannel) {
+                            args[arg.name] = arr[currentChannel];
+                            currentChannel++;
+                            text = text.replace(/^<#.+>/, '');
+                            text = text.trim();
+                        }else{
+                            msg.channel.send("```Arguement Error: no channel was given```");
+                        }
+                        break;
                     }
-                }
-                if (!optionChosen) {
-                    let options = "";
-                    for (let i = 0; i < arg.options.length; i++) {
-                        options += "'" + arg.options[i] + "'";
-                        if (i < arg.options.length - 1) options += ", "
+                    case "user": {
+                        let arr = msg.mentions.users.array();
+                        if (arr.length > currentUser) {
+                            args[arg.name] = arr[currentUser];
+                            currentUser++;
+                            text = text.replace(/^<@.+>/, '');
+                            text = text.trim();
+                        }else{
+                            msg.channel.send("```Arguement Error: no user was given```");
+                        }
+                        break;
                     }
-                    msg.edit(msg.content +
-                        "\n```Arguement Error: '" + text.split(" ")[0] + "' is not a valid option for '" + arg.name + "'." +
-                        "\n - Valid options: " + options + "```"
-                    );
-
-                    return;
+                    default:
+                        msg.channel.send("```Error: command is invalid due to arg type for " + arg.name + "```");
+                        break;
                 }
             } else {
-                if (text.length > 0) {
-                    let words = text.split(" ");
-                    args[arg.name] = words.shift();
-                    text = words.join(" ");
+                if (arg.options.length > 0) {
+                    let optionChosen = false;
+                    for (let option of arg.options) {
+                        if (text.startsWith(option)) {
+                            args[arg.name] = text.slice(0, option.length);
+                            text = text.slice(option.length + 1);
+
+                            optionChosen = true;
+                        }
+                    }
+                    if (!optionChosen) {
+                        let options = "";
+                        for (let i = 0; i < arg.options.length; i++) {
+                            options += "'" + arg.options[i] + "'";
+                            if (i < arg.options.length - 1) options += ", "
+                        }
+                        msg.channel.send(
+                            "```Arguement Error: '" + text.split(" ")[0] + "' is not a valid option for '" + arg.name + "'." +
+                            "\n - Valid options: " + options + "```"
+                        );
+
+                        return;
+                    }
                 } else {
-                    msg.edit(msg.content + "\n```Arguement Error: Not enough arguements were given```");
-                    return;
+                    if (text.length > 0) {
+                        let words = text.split(" ");
+                        args[arg.name] = words.shift();
+                        text = words.join(" ");
+                    } else {
+                        msg.channel.send("```Arguement Error: Not enough arguements were given```");
+                        return;
+                    }
                 }
             }
         }
@@ -134,15 +168,15 @@ class CommandHandler {
      */
     handle(msg) {
 
-        let text = msg.content.toLocaleLowerCase();
+        let text = msg.content;
 
         for (let prefix of this.state.prefixes) {
-            if (text.startsWith(prefix)) {
+            if (text.toLocaleLowerCase().startsWith(prefix)) {
                 text = text.slice(prefix.length);
 
                 commandLoop:
                 for (let command of this.commands) {
-                    if (text.startsWith(command.name.toLocaleLowerCase())) {
+                    if (text.toLocaleLowerCase().startsWith(command.name.toLocaleLowerCase())) {
                         //if command is found
                         if (this.state.deleteCommands) {
                             msg.delete().then(delMsg => {
@@ -153,7 +187,7 @@ class CommandHandler {
                         break;
                     } else {
                         for (let alias of command.aliases) {
-                            if (text.startsWith(alias)) {
+                            if (text.toLocaleLowerCase().startsWith(alias.toLocaleLowerCase())) {
                                 //if command is found
                                 if (this.state.deleteCommands) {
                                     msg.delete().then(delMsg => {

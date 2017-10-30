@@ -1,14 +1,12 @@
-//lol ⬆ ⬇
-
-const { Command, Arg } = require("./commands.js");
-const { Message, MessageReaction, RichEmbed, Guild } = require("discord.js");
+const fs = require('fs');
+const { Command, Arg, UserArg } = require("./commands.js");
+const { Message, MessageReaction, RichEmbed, Guild, User } = require("discord.js");
 
 let commands = [
-    new Command("ping", "gets the ping of this selfbot", null, (r, msg) => {
-        let ping = new Date().getTime() - msg.createdTimestamp;
-        msg.edit(msg.content + " > took `" + ping + "`ms");
+    new Command("ping", "gets the ping of this selfbot", null, (r, msg, args, rsc) => {
+        r("took `" + rsc.bot.ping + "`ms");
     }),
-    new Command("eval", "evaluates any javascript", ["test"], (r, msg, args, resources) => {
+    new Command("eval", "evaluates any javascript", ["test"], (r, msg, args, rsc) => {
         try {
             let evaled = eval(args.extra);
             let output = evaled;
@@ -17,40 +15,51 @@ let commands = [
                 output = util.inspect(output, { depth: 0 });
             }
             let type = typeof (evaled) === 'object' ? "object - " + evaled.constructor.name : typeof (evaled);
-            let sent = msg.edit(msg.content, {
+            let sent = msg.channel.send("", {
                 embed: new RichEmbed()
-                    .addField("Output", "```js\n" + resources.tools.prepCode(output) + "```")
+                    .addField("Input", "```js\n" + msg.content + "```")
+                    .addField("Output", "```js\n" + rsc.tools.prepCode(output).slice(0, 1000) + "```")
                     .addField("Type", "```js\n" + type + "```")
             });
             if (output == "Promise { <pending> }") {
                 evaled.then(result => {
-                    sent.then(msg => {
-                        msg.edit(msg.content, {
+                    sent.then(msg2 => {
+                        msg2.edit("", {
                             embed: new RichEmbed()
-                                .addField("Output", "```js\n" + resources.tools.prepCode(util.inspect(result, { depth: 0 }).slice(0, 1750)) + "```")
+                                .addField("Input", "```js\n" + msg.content + "```")
+                                .addField("Output", "```js\n" + rsc.tools.prepCode(util.inspect(result, { depth: 0 })).slice(0, 1000) + "```")
                                 .addField("Type", "```js\nobject - " + result.constructor.name + "```")
                         });
                     });
                 });
             }
         } catch (ex) {
-            msg.edit("", { embed: new RichEmbed().setDescription(": Input :```js\n" + args.extra + "```\n: Exception :```js\n" + ex.message + "```: Type :```js\n" + ex.name + "```") });
+            msg.channel.send("", { embed: new RichEmbed()
+                .addField("Input", "```js\n" + args.extra + "```")
+                .addField("Exception", "```js\n" + ex.message + "```")
+                .addField("Type", "```js\n" + ex.name + "```")
+            });
         }
     }),
-    new Command("prune", "deletes messages by you", null, (r, msg, args, resources) => {
+    new Command("prune", "deletes messages by you", null, (r, msg, args, rsc) => {
         let i = parseInt(args.number) + 1;
         msg.channel.fetchMessages().then(msgs => {
             msgs.some(msgIn => {
-                if (msgIn.author.id === resources.bot.user.id && i > 0) {
+                if (msgIn.author.id === rsc.bot.user.id) {
                     i--;
                     msgIn.delete();
-                    return false;
                 }
+                if(i > 0) return false;
                 return true;
             });
         });
     }, [new Arg("number")]),
-    new Command("getCode", "WIP", null, (r, msg, args, resources) => {
+    new Command("getProfilePic", "gets the link to someone's profile picture", ["getPic"], (r, msg, args) => {
+        /**@type {User} */
+        let user = args.user;
+        msg.channel.send(user.username + "'s profile picture link: " + user.displayAvatarURL);
+    }, [new UserArg("user")]),
+    new Command("getCode", "lets you view this bot's code", null, (r, msg, args, rsc) => {
 
         //Process code
 
@@ -70,12 +79,12 @@ let commands = [
 
         let lines = code.split("\r\n");
         let i = 0;
-        for(let line of lines){
-            if(segments[i].length + line.length > SEG_LENGTH){
+        for (let line of lines) {
+            if (segments[i].length + line.length > SEG_LENGTH) {
                 segments.push(line);
                 i++;
-            }else{
-                segments[i] += resources.tools.prepCode(line + "\n");
+            } else {
+                segments[i] += rsc.tools.prepCode(line + "\n");
             }
         }
 
@@ -83,7 +92,7 @@ let commands = [
 
         //Deal with reactions
 
-        const pChain = resources.tools.promiseChain;
+        const pChain = rsc.tools.promiseChain;
 
         /**
          * @param {string} symbol 
@@ -99,18 +108,13 @@ let commands = [
          * @param {number} index 
          */
         let waitForReaction = (index, msgr) => {
-            resources.bot.once('messageReactionRemove', re => {
+            rsc.bot.once('messageReactionRemove', re => {
                 /**@type {MessageReaction} */
                 let reaction = re;
                 if (reaction.message.id == msgr.message.id && !reaction.me) {
                     switch (reaction.emoji.toString()) {
                         case "❌":
-                            let embed = new RichEmbed()
-                                .setTitle("code for `" + args.file + "`:")
-                                .setDescription("[CANCLED]");
-                            reaction.message.edit("", { embed }).then(msg => {
-                                msg.clearReactions();
-                            })
+                            reaction.message.delete();
                             break;
                         case "⬇":
                             sendCode(reaction.message, index + 1);
@@ -127,10 +131,7 @@ let commands = [
          * @param {number} index 
          */
         let sendCode = (msg, index) => {
-            let embed = new RichEmbed()
-                .setTitle("code for `" + args.file + "`:")
-                .setDescription("```js\n" + segments[index] + "```")
-            msg.edit(" ", { embed }).then(msg => {
+            msg.edit("code for `" + args.file + "`:```js\n" + segments[index] + "```").then(msg => {
                 if (segments.length > 1) {
                     if (index == 0) {
                         pChain(msg.react("❌"), [
@@ -152,7 +153,9 @@ let commands = [
                 }
             });
         }
-        sendCode(msg, 0);
+        msg.channel.send("loading...").then(newMsg => {
+            sendCode(newMsg, 0);
+        });
     }, [new Arg("file")])
 ];
 

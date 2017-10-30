@@ -3,14 +3,14 @@ const fs = require('fs');
 
 let commands = [
     new Command("commands", "gets a list of all commands", null, (r, msg, args, rsc) => {
-        msg.edit({
+        msg.channel.send("", {
             embed: rsc.tools.embedList("commands", rsc.commandhandler.commands,
                 cmd => { return "**" + cmd.name + "** - " + cmd.description },
                 -4)
         });
     }),
     new Command("parsers", "gets a list of all parsers", null, (r, msg, args, rsc) => {
-        msg.edit({
+        msg.channel.send("", {
             embed: rsc.tools.embedList("parsers", rsc.parserhandler.parsers,
                 parser => { return "**" + parser.name + "** - " + parser.description },
             )
@@ -40,20 +40,20 @@ let commands = [
             resources.restart(msg2);
         });
     }),
-    new Command("stop", "stops the bot", null, (r, msg) => {
+    new Command("stop", "stops the bot", null, (r, msg, args, rsc) => {
         r("shutting down...").then(() => {
-            resources.save();
+            rsc.save();
             process.exit(0);
         });
     }),
     new Command("deleteResponses", "sets whether the bot should automatically delete responses using the response function", null, (r, msg, args, rsc) => {
         rsc.commandhandler.state.deleteResponses = args.onoff === "on" ? true : false;
         r("deleteResponses turned " + args.onoff);
-    }, [new Arg("onoff", null, ["on", "off"])]),
+    }, [new Arg("onoff", ["on", "off"])]),
     new Command("deleteCommands", "sets whether the bot should automatically delete the message that activated the command", null, (r, msg, args, rsc) => {
         rsc.commandhandler.state.deleteCommands = args.onoff === "on" ? true : false;
         r("deleteCommands turned " + args.onoff);
-    }, [new Arg("onoff", null, ["on", "off"])])
+    }, [new Arg("onoff", ["on", "off"])])
 ]
 
 module.exports = commands;
