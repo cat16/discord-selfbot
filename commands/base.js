@@ -53,7 +53,19 @@ let commands = [
     new Command("deleteCommands", "sets whether the bot should automatically delete the message that activated the command", null, (r, msg, args, rsc) => {
         rsc.commandhandler.state.deleteCommands = args.onoff === "on" ? true : false;
         r("deleteCommands turned " + args.onoff);
-    }, [new Arg("onoff", ["on", "off"])])
+    }, [new Arg("onoff", ["on", "off"])]),
+    new Command("reload", "reloads a command (yet to come) or parser so you don't have to restart the bot", null, (r, msg, args, rsc) => {
+        switch(args.cmdparser){
+            case "parser":
+            let name = args.extra;
+            if(rsc.parserhandler.reload(name)){
+                r("successfully reloaded parser '"+name+"'");
+            }else{
+                r("could not find paresr '"+name+"'")
+            }
+            break;
+        }
+    }, [new Arg("cmdparser", ["parser"])])
 ]
 
 module.exports = commands;

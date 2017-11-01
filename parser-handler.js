@@ -52,7 +52,7 @@ class ParserHandler {
                         edited = this.parsers[i].parse(newMsg, (msg) => {console.log("[parser:"+this.parsers[i].name+"] "+msg)});
                     } catch (ex) {
                         console.error("Error occured while using parser '" + this.parsers[i].name + "':");
-                        console.errer(ex.stack);
+                        console.error(ex.stack);
                     }
                     if (edited == null) {
                         i++;
@@ -148,6 +148,16 @@ class ParserHandler {
             }
         }
         save("parsing", saveData);
+    }
+
+    reload(name) {
+        for(let parser of this.parsers){
+            if(parser.name === name){
+                parser.load({});
+                return true;
+            }
+        }
+        return false;
     }
 }
 

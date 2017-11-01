@@ -1,5 +1,5 @@
-let { Parser, MsgEdit } = require("./parsing.js");
-let { RichEmbed } = require("discord.js");
+let { Parser, MsgEdit } = require('./parsing.js');
+let { RichEmbed } = require('discord.js');
 
 /**
  * An easy way to replace a string with another string
@@ -28,7 +28,7 @@ class GroupApplier {
     /**
      * 
      * @param {string[]} keys 
-     * @param {function(string, string[]): MsgEdit} applyFunc 
+     * @param {function(string, object): string} applyFunc 
      */
     constructor(keys, applyFunc) {
         this.keys = keys;
@@ -60,56 +60,29 @@ class Applier {
     }
 }
 
-/**The list of replacers */
-let replacers = [
+/**
+ * The list of replacers
+ * @type {Replacer[]}
+*/
+let replacers = [];
 
-    //defaults
-
-    new Replacer(["(lenny)"], "( ͡° ͜ʖ ͡°)"),
-    new Replacer(["(tm)"], "™")
-];
-
-/**The list of group appliers */
-let groups = [
-
-    //defaults
-
-    new GroupApplier(
-        ["embed"],
-        (text, args) => {
-            return { options: { embed: new RichEmbed()
-                .setDescription(text)
-                .setColor(args.color)
-            }};
-        }
-    ),
-
-    new GroupApplier(
-        ["long"],
-        (text, args) => {
-            let spaces = "   ";
-            if (args.spaces != null) {
-                for (let i = 0; i < args.spaces; i++) {
-                    spaces += " ";
-                }
-            }
-            text = text.split(" ").join(spaces);
-            return { msg: text.split("").join(spaces) };
-        }
-    )
-];
+/**
+ * The list of group appliers
+ * @type {GroupApplier[]}
+ * */
+let groups = [];
 
 let options = {
     /**options for group appliers */
     grouping: {
         /**The string that starts groups */
-        groupStart: "[",
+        groupStart: '[',
         /**The string that ends groups */
-        groupEnd: "]",
+        groupEnd: ']',
         /**The string that terminates groups */
-        groupTerminator: "/",
+        groupTerminator: '/',
         /**The seperator for arguements in groups */
-        argSeperator: ","
+        argSeperator: ','
     }
 }
 
@@ -127,83 +100,60 @@ let applyReplacing = function (msg) {
 }
 
 /**
- * @param {string} word 
- * @param {number} index 
- * @param {Applier[]} applying 
+ * @param {string} msg
+ * @return {string}
  */
-let applyGrouping = function (word, wordLength, index, applying) {
+let applyGrouping = function (msg) {
 
-    let start = options.grouping.groupStart;
-    let end = options.grouping.groupEnd;
-    let terminator = options.grouping.groupTerminator;
-    let argSeparator = options.grouping.argSeperator;
+    const start = options.grouping.groupStart;
+    const end = options.grouping.groupEnd;
+    const term = options.grouping.groupTerminator;
+    const sep = options.grouping.argSeperator;
 
-    if (word.startsWith(start) && word.endsWith(end)) {
-
-        for (let group of groups) {
-            for (let key of group.keys) {
-
-                if (word.slice(1, key.length + 1) == key) {
-
-                    let argsRaw = word.slice(1, word.length - 1).split(argSeparator);
-                    argsRaw.shift();
+    for (let group of groups) {
+        for (let key of group.keys) {
+            let startRegex = (start + key + '.*' + end + '.*').replace(/\]/g, '\\]').replace(/\[/g, '\\[');
+            let mainRegex = startRegex + ((start + term + key + end).replace(/\]/g, '\\]').replace(/\[/g, '\\['));
+            let matches = msg.match(new RegExp(mainRegex, 'g'));
+            if (matches != null) {
+                for (let match of matches) {
                     let args = {};
-                    for (let argRaw of argsRaw) {
-                        args[argRaw.split("=")[0]] = argRaw.split("=")[1];
+                    let argsString = match
+                        .substring(start.length + key.length, match.indexOf(end))
+                    if (argsString.length > 0) {
+                        argsString.substring(sep.length).split(sep).forEach(value => {
+                            args[value.substring(sep.length - 1, value.indexOf('='))] = value.substring(value.indexOf('=') + 1);
+                        });
                     }
-                    applying.push(new Applier(group, args, index, wordLength));
-                    return;
-
-                } else if (word.slice(1, key.length + 2) == terminator + key) {
-
-                    for (let applier of applying) {
-                        if (applier.group.keys == group.keys) {
-                            applier.end = index;
-                            return;
-                        }
-                    }
-                    return;
+                    let grouperLength = start.length + key.length + end.length;
+                    let content = match.substring(grouperLength + argsString.length, match.length - (grouperLength + term.length));
+                    let replace = group.apply(content, args);
+                    msg = msg.replace(match, replace);
                 }
             }
-        }
-    }
-}
-
-/**
- * @param {Applier[]} appliers 
- * @param {string[]} words 
- * @return {MsgEdit}
- */
-let applyAppliers = function (appliers, words) {
-
-    let edit = new MsgEdit();
-
-    for (let applier of appliers) {
-        let currentEdit = applier.group.apply(words.slice(parseInt(applier.begin) + 1, applier.end).join(" "), applier.args);
-        words[applier.begin] = currentEdit.msg;
-        if (edit.options == null) {
-            edit.options = currentEdit.options;
-        }
-        for (let word in words) {
-            if (word > applier.begin && word <= applier.end) {
-                words[word] = null;
+            matches = msg.match(new RegExp(startRegex));
+            if (matches != null) {
+                let match = matches[0];
+                let args = {};
+                let argsString = match
+                    .substring(start.length + key.length, match.indexOf(end))
+                if (argsString.length > 0) {
+                    argsString.substring(sep.length).split(sep).forEach(value => {
+                        args[value.substring(sep.length - 1, value.indexOf('='))] = value.substring(value.indexOf('=') + 1);
+                    });
+                }
+                let grouperLength = start.length + key.length + end.length;
+                let content = match.substring(grouperLength + argsString.length);
+                let replace = group.apply(content, args);
+                msg = msg.replace(match, replace);
             }
         }
     }
 
-    for (let word = 0; word < words.length; word++) {
-        if (words[word] == null) {
-            words.splice(word, 1);
-            word--;
-        }
-    }
-
-    edit.msg = words.join(" ");
-
-    return edit;
+    return msg;
 }
 
-const Message = require("discord.js").Message;
+const Message = require('discord.js').Message;
 
 /**
  * @param {Message} msg 
@@ -212,34 +162,73 @@ const Message = require("discord.js").Message;
 let parse = function (msg, log) {
 
     //apply everything
-    let content = applyReplacing(msg.content);
+    let edit = applyGrouping(applyReplacing(msg.content));
 
-    let words = content.split(" ");
-    /**
-     * A list of appliers to deal with
-     * @type {Applier[]}
-     */
-    let applying = [];
-    for (let i in words) {
-        applyGrouping(words[i], words.length, i, applying);
-    }
-    let edit = applyAppliers(applying, words);
-
-    if(edit.msg == msg.content)
+    if (edit == msg.content)
         return null;
 
-    log("parsed message (id "+msg.id+")");
+    log('parsed message (id ' + msg.id + ')');
 
-    return msg.edit(edit.msg, edit.options);
+    return msg.edit(edit);
 }
 
 let load = function (data) {
     if (data.replacers != null) replacers = data.replacers;
+    else replacers = [
+        new Replacer(['(lenny)'], '( ͡° ͜ʖ ͡°)'),
+        new Replacer(['(tm)'], '™')
+    ];
     if (data.groups != null) groups = data.groups;
+    else groups = [
+        new GroupApplier(
+            ['long'],
+            (text, args) => {
+                let spaces = '   ';
+                if (args.spaces != null) {
+                    for (let i = 0; i < args.spaces; i++) {
+                        spaces += ' ';
+                    }
+                }
+                text = text.split(' ').join(spaces);
+                return text.split('').join(spaces);
+            }
+        ),
+
+        new GroupApplier(
+            ['convert'],
+            (text, args) => {
+                switch (args.to) {
+                    case "hex": {
+                        let hexes = [];
+                        for (i=0; i<text.length; i++) {
+                            hexes.push("0x"+Number(text.charCodeAt(i)).toString(16));
+                        }
+                    
+                        return hexes.join('');
+                        break;
+                    }
+                    default: {
+                        let binaries = [];
+                        for (var i = 0; i < text.length; i++) {
+                            let binary = Number(text.charCodeAt(i)).toString(2);
+                            let needed = 8 - binary.length;
+                            for(let i = 0; i < needed; i++){
+                                binary = "0"+binary;
+                            }
+                            binaries.push(binary);
+                        }
+                        return binaries.join('');
+                        break;
+                    }
+                }
+                return "ERROR";
+            }
+        )
+    ];
 }
 
 let save = function () {
     return { replacers, groups };
 }
 
-module.exports = new Parser("default", "The default parser; contains basic replace and group edit functionality", parse, save, load);
+module.exports = new Parser('default', 'The default parser; contains basic replace and group edit functionality', parse, save, load);
