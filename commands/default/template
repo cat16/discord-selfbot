@@ -1,0 +1,13 @@
+const { Command } = require('../commands.js');
+
+module.exports = class Command extends Command {
+    constructor(bot) {
+        super(bot, {
+
+        })
+    }
+
+    run(msg, args){
+
+    }
+}

@@ -8,9 +8,6 @@ module.exports = class PingCommand extends Command {
         })
     }
 
-    /**
-     * @override
-     */
     run(msg, args){
         this.respond(`Client ping: \`${this.bot.client.ping}\`ms`)
     }
