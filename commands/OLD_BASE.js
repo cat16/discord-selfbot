@@ -58,10 +58,10 @@ let commands = [
         switch(args.cmdparser){
             case "parser":
             let name = args.extra;
-            if(rsc.parserhandler.reload(name)){
+            if(rsc.parserhandler.resetParserData(name)){
                 r("successfully reloaded parser '"+name+"'");
             }else{
-                r("could not find paresr '"+name+"'")
+                r("could not find parser '"+name+"'")
             }
             break;
         }

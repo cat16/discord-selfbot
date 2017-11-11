@@ -6,50 +6,64 @@ let commands = [
     new Command("ping", "gets the ping of this selfbot", null, (r, msg, args, rsc) => {
         r("took `" + rsc.bot.ping + "`ms");
     }),
-    new Command("eval", "evaluates any javascript", ["test"], (r, msg, args, rsc) => {
+    new Command("eval", "evaluates any javascript", ["test"], async (r, msg, args, rsc) => {
         try {
             let evaled = eval(args.extra);
             let output = evaled;
             let util = require('util');
             if (typeof (output) !== 'string') {
-                output = util.inspect(output, { depth: 0 });
+                output = util.inspect(output, { depth: 1 });
             }
             let type = typeof (evaled) === 'object' ? "object - " + evaled.constructor.name : typeof (evaled);
-            let sent = msg.channel.send("", {
-                embed: new RichEmbed()
-                    .addField("Input", "```js\n" + msg.content + "```")
-                    .addField("Output", "```js\n" + rsc.tools.prepCode(output).slice(0, 1000) + "```")
-                    .addField("Type", "```js\n" + type + "```")
-            });
+            let code = rsc.tools.prepCode(output);
+            let embed = new RichEmbed()
+                .addField("Input", "```js\n" + args.extra + "```")
+                .addField("Output", "```js\n" + code.slice(0, 1000) + "```")
+                .addField("Type", "```js\n" + type + "```");
+
+            if (code.length > 1000) {
+                let hastebin = await rsc.tools.hastebin(code, 'js');
+                embed.setDescription(hastebin);
+            }
+
+            let sent = msg.channel.send("", { embed });
             if (output == "Promise { <pending> }") {
-                evaled.then(result => {
+                evaled.then(async result => {
+                    code = rsc.tools.prepCode(util.inspect(result, { depth: 1 }));
+
+                    let embed = new RichEmbed()
+                        .addField("Input", "```js\n" + args.extra + "```")
+                        .addField("Output", "```js\n" + code.slice(0, 1000) + "```")
+                        .addField("Type", "```js\nobject - " + result.constructor.name + "```")
+
+                    if (code.length > 1000) {
+                        let hastebin = await rsc.tools.hastebin(code, 'js');
+                        embed.setDescription(hastebin);
+                    }
                     sent.then(msg2 => {
-                        msg2.edit("", {
-                            embed: new RichEmbed()
-                                .addField("Input", "```js\n" + msg.content + "```")
-                                .addField("Output", "```js\n" + rsc.tools.prepCode(util.inspect(result, { depth: 0 })).slice(0, 1000) + "```")
-                                .addField("Type", "```js\nobject - " + result.constructor.name + "```")
-                        });
+                        msg2.edit("", { embed });
                     });
                 });
             }
         } catch (ex) {
-            msg.channel.send("", { embed: new RichEmbed()
+            let hastebin = await rsc.tools.hastebin(ex.stack);
+            embed = new RichEmbed()
                 .addField("Input", "```js\n" + args.extra + "```")
                 .addField("Exception", "```js\n" + ex.message + "```")
                 .addField("Type", "```js\n" + ex.name + "```")
-            });
+                .setDescription("Full stack: " + hastebin)
+            msg.channel.send("", { embed });
         }
     }),
     new Command("prune", "deletes messages by you", null, (r, msg, args, rsc) => {
-        let i = parseInt(args.number) + 1;
+        let i = parseInt(args.number);
         msg.channel.fetchMessages().then(msgs => {
             msgs.some(msgIn => {
                 if (msgIn.author.id === rsc.bot.user.id) {
                     i--;
                     msgIn.delete();
                 }
-                if(i > 0) return false;
+                if (i > 0) return false;
                 return true;
             });
         });
@@ -59,6 +73,15 @@ let commands = [
         let user = args.user;
         msg.channel.send(user.username + "'s profile picture link: " + user.displayAvatarURL);
     }, [new UserArg("user")]),
+    new Command("reactTest", "wip", null, (r, msg) => {
+        msg.channel.send("test").then(m => {
+            m.react("😀");
+            m.react("😃");
+            m.react("😄");
+            m.react("😁");
+            m.react("😆");
+        })
+    }),
     new Command("getCode", "lets you view this bot's code", null, (r, msg, args, rsc) => {
 
         //Process code

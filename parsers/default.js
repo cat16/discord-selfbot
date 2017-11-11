@@ -207,7 +207,7 @@ let load = function (data) {
                         return hexes.join('');
                         break;
                     }
-                    default: {
+                    case "binary": {
                         let binaries = [];
                         for (var i = 0; i < text.length; i++) {
                             let binary = Number(text.charCodeAt(i)).toString(2);
@@ -220,8 +220,48 @@ let load = function (data) {
                         return binaries.join('');
                         break;
                     }
+                    default: {
+                        let decimals = [];
+                        for (var i = 0; i < text.length; i++) {
+                            let decimal = text.charCodeAt(i);
+                            decimals.push(decimal.toString());
+                        }
+                        return decimals.join('');
+                        break;
+                    }
                 }
                 return "ERROR";
+            }
+        ),
+        new GroupApplier(
+            ['pinyin'],
+            (text, args) => {
+                let replace = {
+                    'a1': 'ā',
+                    'a2': 'á',
+                    'a3': 'ǎ',
+                    'a4': 'à',
+                    'e1': 'ē',
+                    'e2': 'é',
+                    'e3': 'ě',
+                    'e4': 'è',
+                    'i1': 'ī',
+                    'i2': 'í',
+                    'i3': 'ǐ',
+                    'i4': 'ì',
+                    'o1': 'ō',
+                    'o2': 'ó',
+                    'o3': 'ǒ',
+                    'o4': 'ò',
+                    'u1': 'ū',
+                    'u2': 'ú',
+                    'u3': 'ǔ',
+                    'u4': 'ù'
+                }
+                for(let r in replace){
+                    text = text.replace(new RegExp(r, 'g'), replace[r]);
+                }
+                return text;
             }
         )
     ];

@@ -1,6 +1,7 @@
 const { Command, respond } = require("./commands/commands.js");
 const Message = require("discord.js").Message;
-const { getFiles, load, save } = require("./tools.js");
+const { getFiles, getDirectories, load, save, classExtends } = require("./tools.js");
+const Selfbot = require('./selfbot.js');
 
 class CommandHandlerState {
     constructor() {
@@ -10,10 +11,6 @@ class CommandHandlerState {
     }
 }
 
-/**
- * @property {Command[]} commands - an array of all commands being used
- * @property {Resources} resources - the resources the bot has
- */
 class CommandHandler {
 
     constructor() {
@@ -21,10 +18,6 @@ class CommandHandler {
          * @type {Command[]}
          */
         this.commands = [];
-        /**
-         * @type {Resources}
-         */
-        this.resources = null;
         /**@type {CommandHandlerState} */
         this.state = Object.assign(new CommandHandlerState(), load("commands"));
     }
@@ -32,43 +25,33 @@ class CommandHandler {
     /**
      * loads all commands from the directory specified
      * @param {String} directory 
+     * @param {Selfbot} bot
      */
-    loadCommands(directory) {
+    loadCommands(directory, bot) {
+        for (let directory2 of getDirectories(directory)) {
+            this.loadCommands(`${directory}/${directory2}`, bot);
+        }
         for (let file of getFiles(directory)) {
 
-            try {
+            if (file.endsWith('.js')) {
 
-                /**@type {Command[]} */
-                let obj = require("./" + file);
+                try {
 
-                if (obj instanceof Array) {
-                    for (let command of obj) {
-                        if (command instanceof Command) {
-                            if (command.args != null) {
-                                for (let arg of command.args) {
-                                    if (arg.options == null) arg.options = [];
-                                }
-                            } else {
-                                command.args = [];
-                            }
-                            if (command.aliases == null) {
-                                command.aliases = [];
-                            }
-                            this.commands.push(command);
-                        }
+                    /**@type {function() : Command} */
+                    let commandClass = require(`${directory}/${file}`);
+
+                    if (classExtends(commandClass, Command)) {
+                        this.commands.push(new commandClass(bot));
                     }
+
+                } catch (ex) {
+                    console.error(
+                        `Could not load command from '${file}'!` +
+                        "\n - " + ex.stack
+                    );
                 }
-
-            } catch (ex) {
-                console.error(
-                    "Could not load command from file '" + file.split("\\commands\\")[1] + "'!" +
-                    "\n - " + ex.stack
-                );
-
             }
         }
-
-        console.log("found and loaded " + this.commands.length + " commands.");
     }
 
     /**
@@ -77,6 +60,7 @@ class CommandHandler {
      * @param {String} text
      */
     process(command, msg, text) {
+
         let args = {};
         let currentChannel = 0;
         let currentUser = 0;
@@ -90,7 +74,7 @@ class CommandHandler {
                             currentChannel++;
                             text = text.replace(/^<#.+>/, '');
                             text = text.trim();
-                        }else{
+                        } else {
                             msg.channel.send("```Arguement Error: no channel was given```");
                         }
                         break;
@@ -102,7 +86,7 @@ class CommandHandler {
                             currentUser++;
                             text = text.replace(/^<@.+>/, '');
                             text = text.trim();
-                        }else{
+                        } else {
                             msg.channel.send("```Arguement Error: no user was given```");
                         }
                         break;
@@ -149,11 +133,8 @@ class CommandHandler {
         }
         args.extra = text;
         try {
-            /**@param {string} msg2*/
-            let respondForCommands = (msg2) => {
-                return respond(msg.channel, msg2, this.state.deleteResponses);
-            };
-            command.handle(respondForCommands, msg, args, this.resources);
+            command.prepare(msg);
+            command.run(msg, args);
             console.log("[command-handler] successfully ran command '" + command.name + "'");
         } catch (ex) {
             console.error(

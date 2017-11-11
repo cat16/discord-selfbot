@@ -22,9 +22,10 @@ const isFile = source => lstatSync(source).isFile();
  * @return {string[]}
  */
 let getDirectories = source => {
+    if(source.startsWith('.')) source = source.substring(1);
     let dirs = readdirSync(__dirname + source).map(name => join(__dirname + source, name)).filter(isDirectory);
     for (let dir in dirs) {
-        dirs[dir] = dirs[dir].slice(__dirname.length);
+        dirs[dir] = dirs[dir].slice(__dirname.length + source.length + 1);
     }
     return dirs;
 }
@@ -34,9 +35,10 @@ let getDirectories = source => {
  * @return {string[]}
  */
 let getFiles = source => {
+    if(source.startsWith('.')) source = source.substring(1);
     let files = readdirSync(__dirname + source).map(name => join(__dirname + source, name)).filter(isFile);
     for (let file in files) {
-        files[file] = files[file].slice(__dirname.length);
+        files[file] = files[file].slice(__dirname.length + source.length + 1);
     }
     return files;
 }
@@ -121,7 +123,7 @@ let load = (category) => {
         if (state[category] != null) {
             data = objectifyFull(state[category]);
         }
-    } catch (ex) { console.error("tools.js#load() > "+ex.stack) }
+    } catch (ex) { console.error("tools.js#load() > " + ex.stack) }
     return data;
 }
 
@@ -187,36 +189,53 @@ let unPrepCode = (code) => {
  * @param {number} [barFix] - the number of 
  * @template T - an object
  */
-let embedList = (title, list, infoFunc, barFix) => {
-    if (barFix == null) barFix = 0;
+let embedList = (title, list, infoFunc) => {
     let listText = "";
-    let maxLength = 0;
     for (let item of list) {
         let itemText = "\n:small_blue_diamond: " + infoFunc(item);
-        if (itemText.length > maxLength) {
-            maxLength = itemText.length;
-        }
         listText += itemText;
     }
-    let bar = "";
-    for (let i = 0; i < ((maxLength - 18 + barFix) / 2) - (title.length / 2); i++) bar += "-";
     return new RichEmbed()
-        .setTitle(":large_orange_diamond:" + bar + title + bar)
+        .setTitle(`:large_orange_diamond: - ${title} :`)
         .setDescription(listText);
 }
 
-//data related
-module.exports.getDirectories = getDirectories;
-module.exports.getFiles = getFiles;
-module.exports.stringifyFull = stringifyFull;
-module.exports.objectifyFull = objectifyFull;
-module.exports.save = save;
-module.exports.load = load;
-module.exports.hold = hold;
-module.exports.release = release;
-//idk
-module.exports.promiseChain = promiseChain;
-//discord specific
-module.exports.prepCode = prepCode;
-module.exports.unPrepCode = unPrepCode;
-module.exports.embedList = embedList;
+let hastebin = async (text, language = '') => {
+    const snek = require('snekfetch');
+    let haste = await snek.post('https://hastebin.com/documents')
+        .send(text)
+        .catch(err => {
+            console.error('An error occured while trying to post to hastebin: ' + err.stack)
+        })
+    let url = "The input was too long for haste or something... idk";
+    if(haste!=null) url = `​https://hastebin.com/${haste.body.key}`;
+    return url
+}
+
+/**
+ * checks if a derived class extends another one
+ * @param {object} derived - the object you want to check (doesn't actually have to be a class)
+ * @param {function} className - the class you want to compare with
+ * @return {boolean} whether or not the object extends the specified class
+ */
+let classExtends = (derived, base) => {
+    return typeof derived === 'function' && new RegExp(`^class .+ extends ${base.name} .+`).test(derived.toString());
+}
+
+module.exports = {
+    getDirectories,
+    getFiles,
+    stringifyFull,
+    objectifyFull,
+    save,
+    load,
+    hold,
+    release,
+    promiseChain,
+    hastebin,
+    classExtends,
+    //discord specific
+    prepCode,
+    unPrepCode,
+    embedList
+}
