@@ -13,7 +13,7 @@ module.exports = class EvalCommand extends Command {
         });
     }
 
-    run(msg, args) {
+    async run(msg, args) {
         try {
             let evaled = eval(args.extra);
             let output = evaled;
@@ -43,7 +43,7 @@ module.exports = class EvalCommand extends Command {
                         .addField("Type", "```js\nobject - " + result.constructor.name + "```")
 
                     if (code.length > 1000) {
-                        let hastebin = await rsc.tools.hastebin(code, 'js');
+                        let hastebin = await this.bot.tools.hastebin(code, 'js');
                         embed.setDescription(hastebin);
                     }
                     sent.then(msg2 => {

@@ -14,6 +14,12 @@
 							"(tm)"
 						],
 						"replace": "™"
+					},
+					{
+						"find": [
+							"(aaa)"
+						],
+						"replace": "aaaaaaaaaaaaaaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA***AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA***"
 					}
 				],
 				"groups": [
@@ -27,13 +33,13 @@
 						"keys": [
 							"convert"
 						],
-						"apply": "(text, args) => {\r\n                switch (args.to) {\r\n                    case \"hex\": {\r\n                        let hexes = [];\r\n                        for (i=0; i<text.length; i++) {\r\n                            hexes.push(\"0x\"+Number(text.charCodeAt(i)).toString(16));\r\n                        }\r\n                    \r\n                        return hexes.join('');\r\n                        break;\r\n                    }\r\n                    case \"binary\": {\r\n                        let binaries = [];\r\n                        for (var i = 0; i < text.length; i++) {\r\n                            let binary = Number(text.charCodeAt(i)).toString(2);\r\n                            let needed = 8 - binary.length;\r\n                            for(let i = 0; i < needed; i++){\r\n                                binary = \"0\"+binary;\r\n                            }\r\n                            binaries.push(binary);\r\n                        }\r\n                        return binaries.join('');\r\n                        break;\r\n                    }\r\n                    default: {\r\n                        let decimals = [];\r\n                        for (var i = 0; i < text.length; i++) {\r\n                            let decimal = text.charCodeAt(i);\r\n                            decimals.push(decimal.toString());\r\n                        }\r\n                        return decimals.join('');\r\n                        break;\r\n                    }\r\n                }\r\n                return \"ERROR\";\r\n            }"
+						"apply": "(text, args) => {\r\n                switch (args.to) {\r\n                    case \"hex\": {\r\n                        let hexes = [];\r\n                        for (i = 0; i < text.length; i++) {\r\n                            hexes.push(\"0x\" + Number(text.charCodeAt(i)).toString(16));\r\n                        }\r\n\r\n                        return hexes.join('');\r\n                        break;\r\n                    }\r\n                    case \"binary\": {\r\n                        let binaries = [];\r\n                        for (var i = 0; i < text.length; i++) {\r\n                            let binary = Number(text.charCodeAt(i)).toString(2);\r\n                            let needed = 8 - binary.length;\r\n                            for (let i = 0; i < needed; i++) {\r\n                                binary = \"0\" + binary;\r\n                            }\r\n                            binaries.push(binary);\r\n                        }\r\n                        return binaries.join('');\r\n                        break;\r\n                    }\r\n                    default: {\r\n                        let decimals = [];\r\n                        for (var i = 0; i < text.length; i++) {\r\n                            let decimal = text.charCodeAt(i);\r\n                            decimals.push(decimal.toString());\r\n                        }\r\n                        return decimals.join('');\r\n                        break;\r\n                    }\r\n                }\r\n                return \"ERROR\";\r\n            }"
 					},
 					{
 						"keys": [
 							"pinyin"
 						],
-						"apply": "(text, args) => {\r\n                let replace = {\r\n                    'a1': 'ā',\r\n                    'a2': 'á',\r\n                    'a3': 'ǎ',\r\n                    'a4': 'à',\r\n                    'e1': 'ē',\r\n                    'e2': 'é',\r\n                    'e3': 'ě',\r\n                    'e4': 'è',\r\n                    'i1': 'ī',\r\n                    'i2': 'í',\r\n                    'i3': 'ǐ',\r\n                    'i4': 'ì',\r\n                    'o1': 'ō',\r\n                    'o2': 'ó',\r\n                    'o3': 'ǒ',\r\n                    'o4': 'ò',\r\n                    'u1': 'ū',\r\n                    'u2': 'ú',\r\n                    'u3': 'ǔ',\r\n                    'u4': 'ù'\r\n                }\r\n                for(let r in replace){\r\n                    text = text.replace(new RegExp(r, 'g'), replace[r]);\r\n                }\r\n                return text;\r\n            }"
+						"apply": "(text, args) => {\r\n                let replace = {\r\n                    'a1': 'ā',\r\n                    'a2': 'á',\r\n                    'a3': 'ǎ',\r\n                    'a4': 'à',\r\n                    'e1': 'ē',\r\n                    'e2': 'é',\r\n                    'e3': 'ě',\r\n                    'e4': 'è',\r\n                    'i1': 'ī',\r\n                    'i2': 'í',\r\n                    'i3': 'ǐ',\r\n                    'i4': 'ì',\r\n                    'o1': 'ō',\r\n                    'o2': 'ó',\r\n                    'o3': 'ǒ',\r\n                    'o4': 'ò',\r\n                    'u1': 'ū',\r\n                    'u2': 'ú',\r\n                    'u3': 'ǔ',\r\n                    'u4': 'ù'\r\n                }\r\n                for (let r in replace) {\r\n                    text = text.replace(new RegExp(r, 'g'), replace[r]);\r\n                }\r\n                return text;\r\n            }"
 					}
 				]
 			}

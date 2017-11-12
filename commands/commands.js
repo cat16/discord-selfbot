@@ -1,3 +1,5 @@
+//require this file to make commands
+
 const { Message } = require('discord.js');
 const Selfbot = require('../selfbot.js');
 

@@ -176,7 +176,12 @@ let load = function (data) {
     if (data.replacers != null) replacers = data.replacers;
     else replacers = [
         new Replacer(['(lenny)'], '( ͡° ͜ʖ ͡°)'),
-        new Replacer(['(tm)'], '™')
+        new Replacer(['(tm)'], '™'),
+        new Replacer(['(aaa)'],
+            'aaaaaaaaaaaaaaaaaaaaaaa' +
+            'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+            '***AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA***'
+        )
     ];
     if (data.groups != null) groups = data.groups;
     else groups = [
@@ -200,10 +205,10 @@ let load = function (data) {
                 switch (args.to) {
                     case "hex": {
                         let hexes = [];
-                        for (i=0; i<text.length; i++) {
-                            hexes.push("0x"+Number(text.charCodeAt(i)).toString(16));
+                        for (i = 0; i < text.length; i++) {
+                            hexes.push("0x" + Number(text.charCodeAt(i)).toString(16));
                         }
-                    
+
                         return hexes.join('');
                         break;
                     }
@@ -212,8 +217,8 @@ let load = function (data) {
                         for (var i = 0; i < text.length; i++) {
                             let binary = Number(text.charCodeAt(i)).toString(2);
                             let needed = 8 - binary.length;
-                            for(let i = 0; i < needed; i++){
-                                binary = "0"+binary;
+                            for (let i = 0; i < needed; i++) {
+                                binary = "0" + binary;
                             }
                             binaries.push(binary);
                         }
@@ -258,7 +263,7 @@ let load = function (data) {
                     'u3': 'ǔ',
                     'u4': 'ù'
                 }
-                for(let r in replace){
+                for (let r in replace) {
                     text = text.replace(new RegExp(r, 'g'), replace[r]);
                 }
                 return text;
