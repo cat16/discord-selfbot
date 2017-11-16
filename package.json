@@ -1,0 +1,27 @@
+{
+  "name": "cat16-selfbot",
+  "version": "1.0.0",
+  "description": "cat16's discord selfbot",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cat16/discord-selfbot.git"
+  },
+  "keywords": [
+    "discord.js",
+    "selfbot"
+  ],
+  "author": "Bryan McShea",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/cat16/discord-selfbot/issues"
+  },
+  "homepage": "https://github.com/cat16/discord-selfbot#readme",
+  "dependencies": {
+    "cycle": "^1.0.3",
+    "discord.js": "^11.2.1"
+  }
+}

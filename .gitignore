@@ -1,3 +1,5 @@
 OLD*
 *.json
 *.bat
+node_modules
+!package.json

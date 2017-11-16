@@ -169,6 +169,7 @@ let prepCode = (code) => {
     return code
         .replace(new RegExp("```", 'g'), "[CODEBLOCK]")
         .replace(new RegExp(config.token, 'g'), "[TOKEN]")
+        .replace(new RegExp(config.email, 'g'), '[EMAIL]')
 }
 
 /**

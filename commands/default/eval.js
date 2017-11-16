@@ -14,11 +14,14 @@ module.exports = class EvalCommand extends Command {
     }
 
     async run(msg, args) {
+
+        let depth = 0;
+
         try {
             let evaled = eval(args.extra);
             let output = evaled;
             if (typeof (output) !== 'string') {
-                output = util.inspect(output, { depth: 1 });
+                output = util.inspect(output, { depth });
             }
             let type = typeof (evaled) === 'object' ? "object - " + evaled.constructor.name : typeof (evaled);
             let code = this.bot.tools.prepCode(output);
@@ -35,7 +38,7 @@ module.exports = class EvalCommand extends Command {
             let sent = msg.channel.send("", { embed });
             if (output == "Promise { <pending> }") {
                 evaled.then(async result => {
-                    code = this.bot.tools.prepCode(util.inspect(result, { depth: 1 }));
+                    code = this.bot.tools.prepCode(util.inspect(result, { depth }));
 
                     let embed = new RichEmbed()
                         .addField("Input", "```js\n" + args.extra + "```")
@@ -53,7 +56,7 @@ module.exports = class EvalCommand extends Command {
             }
         } catch (ex) {
             let hastebin = await this.bot.tools.hastebin(ex.stack);
-            embed = new RichEmbed()
+            let embed = new RichEmbed()
                 .addField("Input", "```js\n" + args.extra + "```")
                 .addField("Exception", "```js\n" + ex.message + "```")
                 .addField("Type", "```js\n" + ex.name + "```")
