@@ -8,8 +8,7 @@ module.exports = class EvalCommand extends Command {
     constructor(bot) {
         super(bot, {
             name: "eval",
-            description: "evaluates any javascript",
-            aliases: ["test"]
+            description: "evaluates any javascript"
         });
     }
 
